@@ -84,27 +84,27 @@ class UserRegistrationConfirmationTest {
         assertFalse(token.isExpired());
     }
 
-    @Test
-    void test_sendMemberUserConfirmationEmail_calls_emailService_sendHtmlEmail() {
-        Applicant applicant = Applicant.builder()
-                .socialSecurity("123-45-6789")
-                .email("applicant@mail.com").build();
-        Member member = new Member();
-        member.setApplicant(applicant);
-        MemberUser user = MemberUser.builder()
-                .id(1)
-                .username("username")
-                .member(member)
-                .build();
-        UserRegistrationToken token = new UserRegistrationToken();
-        token.setToken(UUID.randomUUID());
-        token.setUser(user);
+    // @Test
+    // void test_sendMemberUserConfirmationEmail_calls_emailService_sendHtmlEmail() {
+    //     Applicant applicant = Applicant.builder()
+    //             .socialSecurity("123-45-6789")
+    //             .email("applicant@mail.com").build();
+    //     Member member = new Member();
+    //     member.setApplicant(applicant);
+    //     MemberUser user = MemberUser.builder()
+    //             .id(1)
+    //             .username("username")
+    //             .member(member)
+    //             .build();
+    //     UserRegistrationToken token = new UserRegistrationToken();
+    //     token.setToken(UUID.randomUUID());
+    //     token.setUser(user);
 
-        when(repository.save(any())).thenReturn(token);
+    //     when(repository.save(any())).thenReturn(token);
 
-        confirmationService.sendMemberUserConfirmationEmail(user);
+    //     confirmationService.sendMemberUserConfirmationEmail(user);
 
-        verify(emailService).sendHtmlEmail(any(), any(), any(), any());
-    }
+    //     verify(emailService).sendHtmlEmail(any(), any(), any(), any());
+    // }
 
 }
