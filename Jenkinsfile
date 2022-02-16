@@ -3,7 +3,7 @@ pipeline {
 
   stages {
 
-    stage("build") {
+    stage("checkout") {
       
       steps {
         echo "Checking out Git repo"
