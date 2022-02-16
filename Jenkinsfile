@@ -2,22 +2,16 @@ pipeline {
   agent any
 
   stages {
-
-    stage("checkout") {
-      
-      steps {
-        echo "Checking out Git repo"
-      }
-    }
     stage("build") {
     
       steps {
-        echo "Building application"
+        sh "git submodule init"
+        sh "git submodule update"
       }
     }
     stage("test") {
       steps {
-        echo "Testing applaction"
+        sh "mvn clean package"
       } 
     }
     stage("deploy") {
