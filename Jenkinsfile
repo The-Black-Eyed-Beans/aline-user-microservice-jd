@@ -36,7 +36,9 @@ pipeline {
       } 
     }
     stage('archive') {
-      archiveArtifacts artifacts: 'user-microservice/target/*.jar', followSymlinks: false
+      steps {
+        archiveArtifacts artifacts: 'user-microservice/target/*.jar', followSymlinks: false
+      }
     }
     stage('clean-workspace') {
       steps {
