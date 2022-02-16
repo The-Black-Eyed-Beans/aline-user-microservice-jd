@@ -1,3 +1,5 @@
+def gv
+
 pipeline {
   agent any
 
@@ -6,21 +8,28 @@ pipeline {
   }
 
   parameters {
-    booleanParam(name: 'IS_DEPLOYING', defaultValue: 'true', description: 'Set false to skip deployment, default true.')
+    string(name: "ECR_TAG", description: "set target ECR tag")
+    booleanParam(name: "IS_DEPLOYING", defaultValue: "true", description: "Set to false to skip deployment, default true.")
   }
 
   stages {
+    stage("init") {
+      script {
+        gv = load "init.groovy"
+      }
+    }
     stage("build") {
-    
       steps {
-        sh "git submodule init"
-        sh "git submodule update"
-        sh "mvn install -DskipTests"
+        script {
+          gv.buildApp()
+        }
       }
     }
     stage("test") {
       steps {
-        sh "mvn test"
+        script {
+          gv.testApp()
+        }
       } 
     }
     stage("deploy") {
@@ -30,7 +39,9 @@ pipeline {
         }
       }
       steps {
-        echo "Deploying application"
+        script {
+          gv.deployToECR()
+        }
       }
     }
   }
