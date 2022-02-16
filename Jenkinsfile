@@ -22,11 +22,12 @@ pipeline {
       steps {
         sh "git submodule init"
         sh "git submodule update"
+        sh "mvn install -DskipTests"
       }
     }
     stage("test") {
       steps {
-        sh "mvn clean package"
+        sh "mvn test"
       } 
     }
     stage("deploy") {
