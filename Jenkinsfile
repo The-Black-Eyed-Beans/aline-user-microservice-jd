@@ -10,6 +10,7 @@ pipeline {
   parameters {
     string(name: "ECR_TAG", description: "set target ECR tag")
     booleanParam(name: "IS_DEPLOYING", defaultValue: "true", description: "Set to false to skip deployment, default true.")
+    booleanParam(name: "IS_TESTING", defaultValue: "true", description: "Set to false to skip testing, default true.")
   }
 
   stages {
@@ -33,6 +34,16 @@ pipeline {
           gv.testApp()
         }
       } 
+    }
+    stage('archive') {
+      archiveArtifacts artifacts: 'user-microservice/target/*.jar', followSymlinks: false
+    }
+    stage('clean-workspace') {
+      steps {
+        script {
+          gv.cleanWorkspace()
+        }
+      }
     }
     stage("deploy") {
       when {
