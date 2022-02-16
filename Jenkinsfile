@@ -6,7 +6,7 @@ pipeline {
     stage("build") {
       
       steps {
-        echo "Checking out Git repo
+        echo "Checking out Git repo"
       }
     }
     stage("build") {
