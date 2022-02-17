@@ -15,8 +15,8 @@ pipeline {
 
   environment {
     AWS_ACCOUNT_ID = credentials("AWS-ACCOUNT-ID")
-    DOCKER_IMAGE = user-microservice
-    ECR_REGION = us-east-1
+    DOCKER_IMAGE = "user-microservice"
+    ECR_REGION = "us-east-1"
   }
 
   stages {
