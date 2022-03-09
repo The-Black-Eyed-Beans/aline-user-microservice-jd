@@ -23,41 +23,48 @@ pipeline {
     stage("init") {
       steps {
           script {
-          gv = load "init.groovy"
+          gv = load "script.groovy"
         }
       }
     }
-    stage("build") {
+    stage("Build") {
       steps {
         script {
           gv.buildApp()
         }
       }
     }
-    stage("test") {
+    stage("Test") {
       steps {
         script {
           gv.testApp()
         }
       } 
-    }
-    stage('archive') {
+    }    
+    stage("SonarQube") {
       steps {
-        archiveArtifacts artifacts: 'user-microservice/target/*.jar', followSymlinks: false
+        withSonarQubeEnv("us-west-1-sonar") {
+            sh "mvn sonar:sonar"
+        }
       }
     }
-    stage("deploy") {
+    stage("Await Quality Gate") {
+      steps {
+          waitForQualityGate abortPipeline: true
+      }
+    }
+    stage("Upstream to ECR") {
       steps {
         script {
-          gv.deployToECR()
+          gv.upstreamToECR()
         }
       }
     }
   }
   post {
-    always {
+    cleanup {
       script {
-          gv.postAlways()
+          gv.postCleanup()
         }
     }
   }
