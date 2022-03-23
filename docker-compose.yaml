@@ -1,11 +1,13 @@
 version: "3.9"
 
-x-aws-vpc: "vpc-0db9f29aa540a9c68"
-x-aws-cluster: "foo-bar"
+x-aws-vpc: ${VPC}
+x-aws-cluster: ${CLUSTER}
 
 services:
   user-microservice:
-    image: 086620157175.dkr.ecr.us-east-2.amazonaws.com/user-microservice-jd:latest
+    image: $AWS_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/user-microservice-jd:latest
+    networks:
+      - default
     secrets:
       - MYSQL_USER
       - MYSQL_PASSWORD
@@ -15,29 +17,33 @@ services:
       - ENCRYPT_SECRET_KEY
       - JWT_SECRET_KEY
     environment:
-      - APP_PORT=80
-      - WAIT_TIME=1000
+      - APP_PORT=${APP_PORT}
+      - WAIT_TIME=${WAIT_TIME}
+networks:
+  default:
+    external: true
+    name: ${SECUTIRY_GROUP}
 secrets:
   MYSQL_USER:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_USER-FWdNdR"
+    name: ${MYSQL_USER_ARN}
     external: true
   MYSQL_PASSWORD:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_PASSWORD-LhtkW2"
+    name: ${MYSQL_PASSWORD_ARN}
     external: true
   MYSQL_DATABASE:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_DATABASE-b9Fh2Z"
+    name: ${MYSQL_DATABASE_ARN}
     external: true
   MYSQL_PORT:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_PORT-tWhzES"
+    name: ${MYSQL_PORT_ARN}
     external: true
   MYSQL_HOST:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_HOST-2U7fjS"
+    name: ${MYSQL_HOST_ARN}
     external: true
   ENCRYPT_SECRET_KEY:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:ENCRYPT_SECRET_KEY-kSHR9Q"
+    name: ${ENCRYPT_SECRET_KEY_ARN}
     external: true
   JWT_SECRET_KEY:
-    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:JWT_SECRET_KEY-tWhzES"
+    name: ${JWT_SECRET_KEY_ARN}
     external: true
 
 x-aws-cloudformation:
@@ -47,4 +53,4 @@ x-aws-cloudformation:
         NetworkConfiguration:
           AwsvpcConfiguration:
             Subnets:
-              - "subnet-03e71d83a9a4c0c03"
+              - ${SUBNET}
