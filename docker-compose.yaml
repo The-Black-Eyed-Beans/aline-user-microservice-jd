@@ -1,0 +1,50 @@
+version: "3.9"
+
+x-aws-vpc: "vpc-0db9f29aa540a9c68"
+x-aws-cluster: "foo-bar"
+
+services:
+  user-microservice:
+    image: 086620157175.dkr.ecr.us-east-2.amazonaws.com/user-microservice-jd:latest
+    secrets:
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - MYSQL_DATABASE
+      - MYSQL_HOST
+      - MYSQL_PORT
+      - ENCRYPT_SECRET_KEY
+      - JWT_SECRET_KEY
+    environment:
+      - APP_PORT=80
+      - WAIT_TIME=1000
+secrets:
+  MYSQL_USER:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_USER-FWdNdR"
+    external: true
+  MYSQL_PASSWORD:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_PASSWORD-LhtkW2"
+    external: true
+  MYSQL_DATABASE:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_DATABASE-b9Fh2Z"
+    external: true
+  MYSQL_PORT:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_PORT-tWhzES"
+    external: true
+  MYSQL_HOST:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:MYSQL_HOST-2U7fjS"
+    external: true
+  ENCRYPT_SECRET_KEY:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:ENCRYPT_SECRET_KEY-kSHR9Q"
+    external: true
+  JWT_SECRET_KEY:
+    name: "arn:aws:secretsmanager:us-east-2:086620157175:secret:JWT_SECRET_KEY-tWhzES"
+    external: true
+
+x-aws-cloudformation:
+  Resources:
+    UsermicroserviceService:
+      Properties:
+        NetworkConfiguration:
+          AwsvpcConfiguration:
+            Subnets:
+              - "subnet-03e71d83a9a4c0c03"
