@@ -1,6 +1,3 @@
-import groovy.json.JsonSlurper
-
-def data = ""
 def gv
 
 pipeline {
@@ -17,14 +14,15 @@ pipeline {
   parameters {
     booleanParam(name: "IS_CLEANWORKSPACE", defaultValue: "true", description: "Set to false to disable folder cleanup, default true.")
     booleanParam(name: "IS_DEPLOYING", defaultValue: "true", description: "Set to false to skip deployment, default true.")
-    booleanParam(name: "IS_TESTING", defaultValue: "true", description: "Set to false to skip testing, default true!")
+    booleanParam(name: "IS_TESTING", defaultValue: "false", description: "Set to false to skip testing, default true!")
   }
 
   environment {
     AWS_ACCOUNT_ID = credentials("AWS_ACCOUNT_ID")
-    DOCKER_IMAGE = "user"
-    ECR_REGION = "us-east-2"
+    AWS_PROFILE = credentials("AWS_PROFILE")
     COMMIT_HASH = "${sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()}"
+    DOCKER_IMAGE = "user"
+    ECR_REGION = credentials("AWS_REGION")
   }
 
   stages {
@@ -68,35 +66,32 @@ pipeline {
         }
       }
     }
-    stage("Get Secrets"){
+    stage("Fetch Environment Variables"){
       steps {
-        sh """aws secretsmanager  get-secret-value --secret-id prod/services --region us-east-2 --profile joshua | jq -r '.["SecretString"]' | jq '.' > secrets"""
-      }
-    }
-    stage("Create Deployment Environment"){
-      steps {
-        script {
-          secretKeys = sh(script: 'cat secrets | jq "keys"', returnStdout: true).trim()
-          secretValues = sh(script: 'cat secrets | jq "values"', returnStdout: true).trim()
-          def parser = new JsonSlurper()
-          def keys = parser.parseText(secretKeys)
-          def values = parser.parseText(secretValues)
-          for (key in keys) {
-              def val="${key}=${values[key]}"
-              data += "${val}\n"
-          }
-        }
-        sh "rm -f .env && touch .env"
-        writeFile(file: '.env', text: data)
-        sh "echo 'BUILD_TAG=$COMMIT_HASH' >> .env"
-        sh "echo 'APP_PORT=80' >> .env"
-        sh "echo 'WAIT_TIME=1000' >> .env"
+        sh "aws lambda invoke --function-name getServiceEnv data.json --profile $AWS_PROFILE"
       }
     }
     stage("Deploy to ECS"){
+      environment {
+        ARN_ENCRYPT_SECRET_KEY = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_ENCRYPT_SECRET_KEY"]'""", returnStdout: true).trim()}"
+        ARN_JWT_SECRET_KEY = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_JWT_SECRET_KEY"]'""", returnStdout: true).trim()}"
+        ARN_MYSQL_DATABASE = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_MYSQL_DATABASE"]'""", returnStdout: true).trim()}"
+        ARN_MYSQL_HOST = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_MYSQL_HOST"]'""", returnStdout: true).trim()}"
+        ARN_MYSQL_PASSWORD = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_MYSQL_PASSWORD"]'""", returnStdout: true).trim()}"
+        ARN_MYSQL_PORT = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_MYSQL_PORT"]'""", returnStdout: true).trim()}"
+        ARN_MYSQL_USER = "${sh(script: """cat data.json | jq -r '.["body"]["ARN_MYSQL_USER"]'""", returnStdout: true).trim()}"
+        APP_PORT = "${sh(script: """cat data.json | jq -r '.["body"]["APP_PORT"]'""", returnStdout: true).trim()}"
+        CLUSTER = "${sh(script: """cat data.json | jq -r '.["body"]["CLUSTER"]'""", returnStdout: true).trim()}"
+        LOAD_BALANCER = "${sh(script: """cat data.json | jq -r '.["body"]["LOAD_BALANCER"]'""", returnStdout: true).trim()}"
+        SG_PRIVATE = "${sh(script: """cat data.json | jq -r '.["body"]["SG_PRIVATE"]'""", returnStdout: true).trim()}"
+        SUBNET_ONE = "${sh(script: """cat data.json | jq -r '.["body"]["SUBNET_ONE"]'""", returnStdout: true).trim()}"
+        SUBNET_TWO = "${sh(script: """cat data.json | jq -r '.["body"]["SUBNET_TWO"]'""", returnStdout: true).trim()}"
+        VPC = "${sh(script: """cat data.json | jq -r '.["body"]["VPC"]'""", returnStdout: true).trim()}"
+        WAIT_TIME = "${sh(script: """cat data.json | jq -r '.["body"]["WAIT_TIME"]'""", returnStdout: true).trim()}"
+      }
       steps {
         sh "docker context use prod-jd"
-        sh "docker compose -p $DOCKER_IMAGE --env-file .env up -d"
+        sh "docker compose -p $DOCKER_IMAGE-jd up -d"
       }
     }
   }
