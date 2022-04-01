@@ -2,27 +2,30 @@ version: "3.9"
 
 x-aws-vpc: ${VPC}
 x-aws-cluster: ${CLUSTER}
+x-aws-loadbalancer: ${LOAD_BALANCER}
 
 services:
   user-microservice:
     image: $AWS_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/user-microservice-jd:latest
-    networks:
-      - default
+    ports:
+      - target: ${PORT_USER}
+        x-aws-protocol: http
     secrets:
       - MYSQL_USER
       - MYSQL_PASSWORD
       - MYSQL_DATABASE
-      - MYSQL_HOST
       - MYSQL_PORT
+      - MYSQL_HOST
       - ENCRYPT_SECRET_KEY
       - JWT_SECRET_KEY
     environment:
-      - APP_PORT=${APP_PORT}
+      - APP_PORT=${PORT_USER}
       - WAIT_TIME=${WAIT_TIME}
-networks:
-  default:
-    external: true
-    name: ${SG_PRIVATE}
+    deploy:
+      resources:
+        reservations:
+          memory: 1Gb
+          cpus: "1"
 secrets:
   MYSQL_USER:
     name: ${ARN_MYSQL_USER}
@@ -55,3 +58,8 @@ x-aws-cloudformation:
             Subnets:
               - ${SUBNET_ONE}
               - ${SUBNET_TWO}
+    Usermicroservice8070TargetGroup:
+      Properties:
+        HealthCheckPath: /health
+        Matcher:
+          HttpCode: 200-499
